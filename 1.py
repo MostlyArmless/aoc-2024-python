@@ -1,3 +1,4 @@
+from collections import defaultdict
 import re
 sampleInput = '''
 3   4
@@ -1020,7 +1021,7 @@ def problem1_part1(input):
       right.append(int(result.group(2)))
     except:
       pass
-    
+
   left.sort()
   right.sort()
   distances = []
@@ -1030,5 +1031,31 @@ def problem1_part1(input):
 
   print(sum(distances))
 
+def problem1_part2(input):
+  leftNumbers = []
+  rightCounts = defaultdict(int)
+  pattern = re.compile(r'(\d+)\s+(\d+)')
+  for line in input.split('\n'):
+    try:
+      result = pattern.search(line)
+      # Count the occurrences of each number
+      leftNumbers.append(int(result.group(1)))
+      rightCounts[(int(result.group(2)))] += 1
+    except:
+      pass
+
+  similarityScore = 0
+
+  for number in leftNumbers:
+    occurrencesInRight = rightCounts[number]
+    print(number, occurrencesInRight)
+    similarityScore += (number * occurrencesInRight)
+
+  print(similarityScore)
+  
+
 problem1_part1(sampleInput)
 problem1_part1(realInput)
+
+problem1_part2(sampleInput)
+problem1_part2(realInput)
