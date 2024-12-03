@@ -1,5 +1,13 @@
 import re
-input = '''
+sampleInput = '''
+3   4
+4   3
+2   5
+1   3
+3   9
+3   3
+'''
+realInput = '''
 18944   47230
 94847   63037
 93893   35622
@@ -1001,26 +1009,26 @@ input = '''
 31651   49166
 66721   94774
 '''
+def problem1_part1(input):
+  left = []
+  right = []
+  pattern = re.compile(r'(\d+)\s+(\d+)')
+  for line in input.split('\n'):
+    try:
+      result = pattern.search(line)
+      left.append(int(result.group(1)))
+      right.append(int(result.group(2)))
+    except:
+      pass
+    
+  left.sort()
+  right.sort()
+  distances = []
 
-left = []
-right = []
-pattern = re.compile(r'(\d+)\s+(\d+)')
-for line in input.split('\n'):
-  try:
-    result = pattern.search(line)
-    left.append(int(result.group(1)))
-    right.append(int(result.group(2)))
-  except:
-    print(f'bad line = {line}')
+  for pair in zip(left, right):
+    distances.append(abs(pair[0] - pair[1]))
 
-left.sort()
-right.sort()
-distances = []
-print('sorted:')
-print(left)
-print(right)
+  print(sum(distances))
 
-for pair in zip(left, right):
-  distances.append(abs(pair[0] - pair[1]))
-
-print(distances, sum(distances))
+problem1_part1(sampleInput)
+problem1_part1(realInput)
