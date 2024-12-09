@@ -1069,8 +1069,8 @@ def part2(input: str):
 
   return num_safe_reports_with_removals_allowed
 
-part1(sample_input)
-part1(real_input)
+assert part1(sample_input) == 2
+assert part1(real_input) == 490
 
-part2(sample_input)
-part2(real_input)
+assert part2(sample_input) == 4
+assert part2(real_input) == 536
