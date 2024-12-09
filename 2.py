@@ -1011,31 +1011,66 @@ real_input='''8 11 13 14 15 18 17
 def part1(input: str):
   num_safe_reports = 0
   for report in input.split('\n'):
-    is_safe = True
     levels = [int(s) for s in report.split(' ')]
-    delta = None
-    for i in range(1, len(levels)):
-      new_delta = levels[i] - levels[i-1]
-      was_increasing = delta and delta > 0
-      was_decreasing = delta and delta < 0
-      now_increasing = new_delta > 0
-      now_decreasing = new_delta < 0
-      if delta and (was_increasing and now_decreasing) or (was_decreasing and now_increasing):
-        is_safe = False
-        break
-
-      delta = new_delta
-      abs_delta = abs(delta)
-      if abs_delta < 1 or abs_delta > 3:
-        is_safe = False
-        break
+    is_safe = check_levels(levels)
       
     # print(levels, 'Safe' if is_safe else 'Unsafe')
     num_safe_reports += 1 if is_safe else 0
 
-  print(num_safe_reports)
+  return num_safe_reports
 
+def check_levels(levels):
+  delta = None
+  for i in range(1, len(levels)):
+    new_delta = levels[i] - levels[i-1]
+    is_safe = check_is_delta_pair_safe(delta, new_delta)
+    if not is_safe:
+      return False
+    delta = new_delta
+  return True
+
+def check_is_delta_pair_safe(delta, new_delta) -> bool:
+  
+  was_increasing = delta and delta > 0
+  was_decreasing = delta and delta < 0
+  now_increasing = new_delta > 0
+  now_decreasing = new_delta < 0
+  if delta and (was_increasing and now_decreasing) or (was_decreasing and now_increasing):
+    return False
+  
+  if delta is not None:
+    d = abs(delta)
+    if d < 1 or d > 3:
+      return False
+    
+  d = abs(new_delta)
+  if d < 1 or d > 3:
+    return False
+  
+  return True
+
+@timer
+def part2(input: str):
+  num_safe_reports_with_removals_allowed = 0
+  for report in input.split('\n'):
+    is_safe = True
+    is_safe_with_removal = True
+    levels = [int(s) for s in report.split(' ')]
+    is_safe = check_levels(levels)
+    if not is_safe:
+      for i_remove in range(len(levels)):
+        levels_with_removal = levels[0:i_remove] + levels[i_remove+1:]
+        is_safe_with_removal = check_levels(levels_with_removal)
+        if is_safe_with_removal:
+          break # no need to keep checking with other removals
+
+    # print(levels, 'Safe\n' if (is_safe or is_safe_with_removal) else 'Unsafe\n')
+    num_safe_reports_with_removals_allowed += 1 if is_safe or is_safe_with_removal else 0
+
+  return num_safe_reports_with_removals_allowed
 
 part1(sample_input)
 part1(real_input)
 
+part2(sample_input)
+part2(real_input)

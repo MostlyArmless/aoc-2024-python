@@ -8,6 +8,6 @@ def timer(func):
         result = func(*args, **kwargs)
         end_time = time.perf_counter()
         execution_time = end_time - start_time
-        print(f"Function '{func.__name__}' took {execution_time:.4f} seconds to execute")
+        print(f"Function '{func.__name__}' took {execution_time:.4f} seconds to execute, answer = {result}")
         return result
     return wrapper
