@@ -12,8 +12,25 @@ search_pattern = re.compile(r'mul\((\d+),(\d+)\)')
 
 @timer
 def part1(input):
+  search_pattern = re.compile(r'mul\((\d+),(\d+)\)')
   search_result = search_pattern.findall(input)
   return sum([int(a) * int(b) for (a,b) in search_result])
   
 part1(sample_input)
-part1(real_input)
+assert part1(real_input) == 189600467
+
+sample_input_for_part_2 = "xmul(2,4)&mul[3,7]!^don't()_mul(5,5)+mul(32,64](mul(11,8)undo()?mul(8,5))"
+@timer
+def part2(input: str):
+  search_pattern = re.compile(r'mul\((\d+),(\d+)\)')
+  split_on_do = input.split("do()")
+  s_to_consider = []
+  for s in split_on_do:
+    split_on_dont = s.split("don't()")
+    s_to_consider += split_on_dont[0]
+  
+  search_result = search_pattern.findall(''.join(s_to_consider))
+  return sum([int(a) * int(b) for (a,b) in search_result])
+
+part2(sample_input_for_part_2)
+assert part2(real_input) == 107069718
