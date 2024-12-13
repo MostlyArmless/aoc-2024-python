@@ -1,13 +1,13 @@
 from utils import timer
 
 
-sample_input_1 = '''..X...
+sample_part_1_input_1 = '''..X...
 .SAMX.
 .A..A.
 XMAS.S
 .X....'''
 
-sample_input_2 = '''....XXMAS.
+sample_part_1_input_2 = '''....XXMAS.
 .SAMXMS...
 ...S..A...
 ..A.A.MS.X
@@ -18,7 +18,7 @@ S.S.S.S.SS
 ..M.M.M.MM
 .X.X.XMASX'''
 
-sample_input_3 = '''MMMSXXMASM
+sample_part_1_input_3 = '''MMMSXXMASM
 MSAMXMSMSA
 AMXSXMAAMM
 MSAMASMSMX
@@ -178,21 +178,21 @@ def part1(input: str):
   num_targets_found = 0
   grid = []
   start_positions = []
-  iRow = 0
+  i_row = 0
   for row in input.split('\n'):
     grid.append([])
-    for iCol, char in enumerate(row):
-      grid[iRow].append(char)
-      if row[iCol] == target[0]:
-        start_positions.append((iRow, iCol))
-    iRow += 1
+    for i_col, char in enumerate(row):
+      grid[i_row].append(char)
+      if row[i_col] == target[0]:
+        start_positions.append((i_row, i_col))
+    i_row += 1
 
-  for (iRow, iCol) in start_positions:
-    num_targets_found += check_for_targets(grid, target, iRow, iCol)
+  for (i_row, i_col) in start_positions:
+    num_targets_found += check_for_targets_part_1(grid, target, i_row, i_col)
   
   return num_targets_found
 
-def check_for_targets(grid, target, r0, c0):
+def check_for_targets_part_1(grid, target, r0, c0):
   num_found = 0
   num_rows = len(grid)
   # This assumes a square grid
@@ -224,8 +224,56 @@ def check_for_targets(grid, target, r0, c0):
 
   return num_found
 
+def check_for_targets_part_2(grid, target, i_row, i_col):
+  num_rows = len(grid)
+  num_cols = len(grid[0])
+  if i_row < 1 or i_row >= num_rows - 1 or i_col < 1 or i_col >= num_cols - 1:
+    return 0
+  
+  diag_1 = set([grid[i_row-1][i_col-1], grid[i_row+1][i_col+1]]) # top left to bottom right
+  diag_2 = set([grid[i_row+1][i_col-1], grid[i_row-1][i_col+1]]) # bottom left to top right
 
-assert part1(sample_input_1) == 4
-assert part1(sample_input_2) == 18
-assert part1(sample_input_3) == 18
+  target_adjacents = set(['M','S'])
+  if diag_1 == target_adjacents and diag_2 == target_adjacents:
+    # print(f'Found @ {i_row, i_col}')
+    return 1
+  return 0
+
+@timer
+def part2(input):
+  # iterate over all rows+cols. whenever we find 'A', we branch out on the diagonals to see if it matches the target surroundings
+  num_targets_found = 0
+  grid = []
+  start_positions = []
+  i_row = 0
+  for row in input.split('\n'):
+    grid.append([])
+    for i_col, char in enumerate(row):
+      grid[i_row].append(char)
+      if row[i_col] == 'A':
+        start_positions.append((i_row, i_col))
+    i_row += 1
+
+  for (i_row, i_col) in start_positions:
+    num_targets_found += check_for_targets_part_2(grid, target, i_row, i_col)
+  
+  return num_targets_found
+
+assert part1(sample_part_1_input_1) == 4
+assert part1(sample_part_1_input_2) == 18
+assert part1(sample_part_1_input_3) == 18
 assert part1(real_input) == 2390
+
+sample_part_2_input_2 = '''.M.S......
+..A..MSMS.
+.M.S.MAA..
+..A.ASMSM.
+.M.S.M....
+..........
+S.S.S.S.S.
+.A.A.A.A..
+M.M.M.M.M.
+..........'''
+assert part2(sample_part_2_input_2) == 9
+assert part2(sample_part_1_input_3) == 9
+assert part2(real_input) == 1809
