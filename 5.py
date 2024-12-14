@@ -1,4 +1,5 @@
 from collections import defaultdict
+import functools
 import re
 from math import floor
 
@@ -1442,5 +1443,37 @@ def is_update_valid(update: list[int], numbers_that_must_come_after):
   return is_valid
 
 
+@timer
+def part2(input: str):
+  precedence_pattern = re.compile(r'(\d+)\|(\d+)')
+  section = 0
+  numbers_that_must_come_after = defaultdict(set)
+  score = 0
+
+  for line in input.split('\n'):
+    if section == 0:
+      result = precedence_pattern.search(line)
+      if result is None:
+        section += 1
+        continue
+      a = int(result.group(1))
+      b = int(result.group(2))
+      # The rule expressed here is "a must precede b"
+      numbers_that_must_come_after[a].add(b)
+    else:
+      update = [int(s) for s in line.split(',')]
+      i_middle = floor(len(update) / 2)
+      if not is_update_valid(update, numbers_that_must_come_after):
+        def compare(x, y):
+          return -1 if y in numbers_that_must_come_after[x] else 1
+        fixed_update = sorted(update, key=functools.cmp_to_key(compare))
+        score += fixed_update[i_middle]
+  
+  return score
+
+
 assert part1(sample_input) == 143
 assert part1(real_input) == 6260
+
+assert part2(sample_input) == 123
+assert part2(real_input) == 5346
