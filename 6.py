@@ -149,6 +149,7 @@ class Direction(Enum):
     DOWN = 'v'
     LEFT = '<'
     RIGHT = '>'
+    
 directions = {d.value for d in Direction}
 Position: TypeAlias = Tuple[int, int]
 
@@ -160,7 +161,7 @@ def part1(input: str) -> int:
     num_cols = len(grid[0])
 
     obstacles: Set[Position] = set()
-    position: Position = ()
+    position: Position = (0, 0)
     direction: Direction = Direction.UP
     visited: Set[Position] = set()
     # Establish the obstacles and the starting position
@@ -185,9 +186,65 @@ def part1(input: str) -> int:
     
     return len(visited)
 
-def find_character_and_obstacle_positions(grid: List[str], obstacles: Set[Position], visited: Set[Position]):
-    position = ()
-    direction = Direction.UP
+
+# Encodes position AND direction information
+PositionVector: TypeAlias = Tuple[Position, Direction]
+
+@timer
+def part2(input: str) -> int:
+    # parse the input into a grid
+    grid = input.split('\n')
+    num_rows = len(grid)
+    num_cols = len(grid[0])
+
+    obstacles: Set[Position] = set()
+    initial_position_vector: PositionVector = ((0, 0), Direction.UP)
+    # This time, we must keep track not only of position but direction because
+    # if we end up back in the same place facing the same way,
+    # we know we're stuck in a loop and will never exit the grid
+    visited: Set[PositionVector] = set()
+    # Establish the obstacles and the starting position
+    initial_position_vector = find_character_and_obstacle_positions_vectors(grid, obstacles, visited)
+
+    # Try every possible new trap position to see if it produces an inescapable grid
+    num_traps_which_make_grid_inescapable = 0
+    for i_row in range(num_rows):
+        print(f'Progress: {i_row/num_rows*100}%')
+        for i_col in range(num_cols):
+            trap_position: Position = (i_row, i_col)
+            if trap_position in obstacles:
+                continue
+            obstacles.add(trap_position)
+            # reset stuff to original values before checking
+            visited.clear()
+            visited.add(initial_position_vector)
+            if is_inescapable_grid(num_rows, num_cols, obstacles, initial_position_vector, visited):
+                num_traps_which_make_grid_inescapable += 1
+            obstacles.remove(trap_position)
+
+    return num_traps_which_make_grid_inescapable
+
+def is_inescapable_grid(num_rows: int, num_cols: int, obstacles: Set[Position], position_vector: PositionVector, visited: Set[PositionVector]):
+    while True:
+        # start by attempting to move forward
+        new_position_vector = (move_forward(position_vector[0], position_vector[1]), position_vector[1])
+        if is_outside_grid(new_position_vector[0], num_rows, num_cols):
+            # we made it out, done
+            return False
+        if new_position_vector[0] in obstacles:
+            # can't go forward, will need to turn right instead
+            new_direction = turn_right(position_vector[1])
+            new_position_vector: PositionVector = (position_vector[0], new_direction)
+        else:
+            if new_position_vector in visited:
+                return True
+            visited.add(new_position_vector)
+        
+        position_vector = new_position_vector
+
+def find_character_and_obstacle_positions(grid: List[str], obstacles: Set[Position], visited: Set[Position]) -> Tuple[Position, Direction]:
+    position: Position = (0, 0)
+    direction: Direction = Direction.UP
 
     for i_row, row in enumerate(grid):
         for i_col, cell in enumerate(row):
@@ -196,31 +253,49 @@ def find_character_and_obstacle_positions(grid: List[str], obstacles: Set[Positi
             elif cell in directions:
                 position = (i_row, i_col)
                 visited.add(position)
-                direction = cell
+                direction = Direction(cell)
     return position, direction
+
+def find_character_and_obstacle_positions_vectors(grid: List[str], obstacles: Set[Position], visited: Set[PositionVector]) -> PositionVector:
+    position_vector: PositionVector = ((0, 0), Direction.UP)
+
+    for i_row, row in enumerate(grid):
+        for i_col, cell in enumerate(row):
+            if cell == '#':
+                obstacles.add((i_row, i_col))
+            elif cell in directions:
+                position_vector = ((i_row, i_col), Direction(cell))
+                visited.add(position_vector)
+    return position_vector
 
 def is_outside_grid(new_position: Position, num_rows: int, num_cols: int) -> bool:
     return not (0 <= new_position[0] < num_rows) or not (0 <= new_position[1] < num_cols)
             
 def move_forward(position: Position, direction: Direction) -> Position:
-    if direction == Direction.UP.value:
+    if direction == Direction.UP:
         return (position[0] - 1, position[1])
-    if direction == Direction.RIGHT.value:
+    if direction == Direction.RIGHT:
         return (position[0], position[1] + 1)
-    if direction == Direction.DOWN.value:
+    if direction == Direction.DOWN:
         return (position[0] + 1, position[1])
-    if direction == Direction.LEFT.value:
+    if direction == Direction.LEFT:
         return (position[0], position[1] - 1)
+    else:
+        raise Exception(f"Invalid Direction value {direction}")
     
 def turn_right(direction: Direction) -> Direction:
-    if direction == Direction.UP.value:
-        return Direction.RIGHT.value
-    if direction == Direction.RIGHT.value:
-        return Direction.DOWN.value
-    if direction == Direction.DOWN.value:
-        return Direction.LEFT.value
-    if direction == Direction.LEFT.value:
-        return Direction.UP.value
+    if direction == Direction.UP:
+        return Direction.RIGHT
+    if direction == Direction.RIGHT:
+        return Direction.DOWN
+    if direction == Direction.DOWN:
+        return Direction.LEFT
+    if direction == Direction.LEFT:
+        return Direction.UP
+    else:
+        raise Exception(f"Invalid Direction value {direction}")
 
 assert part1(sample_input) == 41
 assert part1(real_input) == 4890
+assert part2(sample_input) == 6
+assert part2(real_input) == 1995
