@@ -1,4 +1,5 @@
-
+from enum import Enum
+from typing import List, Set, Tuple, TypeAlias
 from utils import timer
 
 sample_input = '''....#.....
@@ -143,34 +144,34 @@ real_input = '''.#....#...................#................#....................
 .............#.......................................................#.........#..................................................
 ....#.................................#...............#.....#....#......##..............#.......................#........#........'''
 
+class Direction(Enum):
+    UP = '^'
+    DOWN = 'v'
+    LEFT = '<'
+    RIGHT = '>'
+directions = {d.value for d in Direction}
+Position: TypeAlias = Tuple[int, int]
+
 @timer
-def part1(input: str):
+def part1(input: str) -> int:
     # parse the input into a grid
     grid = input.split('\n')
     num_rows = len(grid)
     num_cols = len(grid[0])
 
-    obstacles = set()
-    position = ()
-    direction = '^'
-    visited = set()
-    character_indicators = '^v<>'
+    obstacles: Set[Position] = set()
+    position: Position = ()
+    direction: Direction = Direction.UP
+    visited: Set[Position] = set()
     # Establish the obstacles and the starting position
-    for i_row, row in enumerate(grid):
-        for i_col, cell in enumerate(row):
-            if cell == '#':
-                obstacles.add((i_row, i_col))
-            elif cell in character_indicators:
-                position = (i_row, i_col)
-                visited.add(position)
-                direction = cell
+    position, direction = find_character_and_obstacle_positions(grid, obstacles, visited)
 
     # carry out the movement rules:
     # move forward until you would hit an obstacle, then turn right and continue going forwards
     while True:
         # start by attempting to move forward
         new_position = move_forward(position, direction)
-        if not (0 <= new_position[0] < num_rows) or not (0 <= new_position[1] < num_cols):
+        if is_outside_grid(new_position, num_rows, num_cols):
             # we made it out, done
             break
         if new_position in obstacles:
@@ -183,26 +184,43 @@ def part1(input: str):
         position = new_position
     
     return len(visited)
+
+def find_character_and_obstacle_positions(grid: List[str], obstacles: Set[Position], visited: Set[Position]):
+    position = ()
+    direction = Direction.UP
+
+    for i_row, row in enumerate(grid):
+        for i_col, cell in enumerate(row):
+            if cell == '#':
+                obstacles.add((i_row, i_col))
+            elif cell in directions:
+                position = (i_row, i_col)
+                visited.add(position)
+                direction = cell
+    return position, direction
+
+def is_outside_grid(new_position: Position, num_rows: int, num_cols: int) -> bool:
+    return not (0 <= new_position[0] < num_rows) or not (0 <= new_position[1] < num_cols)
             
-def move_forward(position, direction):
-    if direction == '^':
+def move_forward(position: Position, direction: Direction) -> Position:
+    if direction == Direction.UP.value:
         return (position[0] - 1, position[1])
-    if direction == '>':
+    if direction == Direction.RIGHT.value:
         return (position[0], position[1] + 1)
-    if direction == 'v':
+    if direction == Direction.DOWN.value:
         return (position[0] + 1, position[1])
-    if direction == '<':
+    if direction == Direction.LEFT.value:
         return (position[0], position[1] - 1)
     
-def turn_right(direction):
-    if direction == '^':
-        return '>'
-    if direction == '>':
-        return 'v'
-    if direction == 'v':
-        return '<'
-    if direction == '<':
-        return '^'
+def turn_right(direction: Direction) -> Direction:
+    if direction == Direction.UP.value:
+        return Direction.RIGHT.value
+    if direction == Direction.RIGHT.value:
+        return Direction.DOWN.value
+    if direction == Direction.DOWN.value:
+        return Direction.LEFT.value
+    if direction == Direction.LEFT.value:
+        return Direction.UP.value
 
 assert part1(sample_input) == 41
 assert part1(real_input) == 4890
