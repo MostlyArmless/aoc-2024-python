@@ -6,8 +6,13 @@ def timer(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         # Get caller's frame information
-        caller_frame = inspect.currentframe().f_back
-        call_line = inspect.getframeinfo(caller_frame).code_context[0]
+        current_frame = inspect.currentframe()
+        caller_frame = current_frame.f_back if current_frame else None
+        if caller_frame is None:
+            raise Exception("No caller frame.")
+        
+        context = inspect.getframeinfo(caller_frame).code_context
+        call_line = context[0] if context else ''
         
         # Extract variable names from the function call
         # Find text between parentheses and split by comma
