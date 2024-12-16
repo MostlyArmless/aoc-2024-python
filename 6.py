@@ -169,6 +169,12 @@ def part1(input: str) -> int:
 
     # carry out the movement rules:
     # move forward until you would hit an obstacle, then turn right and continue going forwards
+    visited = traverse_grid(num_rows, num_cols, obstacles, position, direction)
+    return len(visited)
+
+def traverse_grid(num_rows: int, num_cols: int, obstacles: Set[Position], position: Position, direction: Direction) -> Set[Position]:
+    visited: Set[Position] = set()
+    visited.add(position)
     while True:
         # start by attempting to move forward
         new_position = move_forward(position, direction)
@@ -184,8 +190,7 @@ def part1(input: str) -> int:
         
         position = new_position
     
-    return len(visited)
-
+    return visited
 
 # Encodes position AND direction information
 PositionVector: TypeAlias = Tuple[Position, Direction]
@@ -203,16 +208,19 @@ def part2(input: str) -> int:
     # if we end up back in the same place facing the same way,
     # we know we're stuck in a loop and will never exit the grid
     visited: Set[PositionVector] = set()
+
     # Establish the obstacles and the starting position
     initial_position_vector = find_character_and_obstacle_positions_vectors(grid, obstacles, visited)
-
+    cells_visited_when_only_default_obstacles: Set[Position] = traverse_grid(num_rows, num_cols, obstacles, initial_position_vector[0], initial_position_vector[1])
+    cells_adjacent_to_original_path = get_adjacent_cells(cells_visited_when_only_default_obstacles, num_rows, num_cols)
     # Try every possible new trap position to see if it produces an inescapable grid
     num_traps_which_make_grid_inescapable = 0
     for i_row in range(num_rows):
         print(f'Progress: {i_row/num_rows*100}%')
         for i_col in range(num_cols):
             trap_position: Position = (i_row, i_col)
-            if trap_position in obstacles:
+            if trap_position in obstacles or \
+                trap_position not in cells_adjacent_to_original_path:
                 continue
             obstacles.add(trap_position)
             # reset stuff to original values before checking
@@ -223,6 +231,24 @@ def part2(input: str) -> int:
             obstacles.remove(trap_position)
 
     return num_traps_which_make_grid_inescapable
+
+def get_adjacent_cells(adjacent_to: Set[Position], num_rows: int, num_cols: int) -> Set[Position]:
+    adjacent_cells: Set[Position] = set()
+    for cell in adjacent_to:
+        adj = move_forward(cell, Direction.UP)
+        if not is_outside_grid(adj, num_rows, num_cols):
+            adjacent_cells.add(adj)
+        adj = move_forward(cell, Direction.DOWN)
+        if not is_outside_grid(adj, num_rows, num_cols):
+            adjacent_cells.add(adj)
+        adj = move_forward(cell, Direction.LEFT)
+        if not is_outside_grid(adj, num_rows, num_cols):
+            adjacent_cells.add(adj)
+        adj = move_forward(cell, Direction.RIGHT)
+        if not is_outside_grid(adj, num_rows, num_cols):
+            adjacent_cells.add(adj)
+        
+    return adjacent_cells
 
 def is_inescapable_grid(num_rows: int, num_cols: int, obstacles: Set[Position], position_vector: PositionVector, visited: Set[PositionVector]):
     while True:
