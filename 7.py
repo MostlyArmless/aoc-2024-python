@@ -862,10 +862,11 @@ real_input = '''5519591: 5 519 507 83
 312646908244179: 3 4 738 54 53 6 9 41 7 9
 21660942534: 539 53 66 7 869'''
 
-operators = ['*', '+']
+part1_operators = ['*', '+']
+part2_operators = ['*', '+', '||']
 
 @timer
-def part1(input: str) -> int:
+def day7(input: str, operators: List[str]) -> int:
     result = 0
     for line in input.split('\n'):
         parts = line.split(':')
@@ -873,7 +874,7 @@ def part1(input: str) -> int:
         nums = parts[1].strip().split(' ')
         # For all possible permutations of operators between the elements of 'nums'
         # print(f'target = {target}, nums = {nums}')
-        for equation in operator_placement_permutations(nums):
+        for equation in operator_placement_permutations(nums, operators):
             if evaluate_equation_left_to_right(equation) == target:
                 result += target
                 # print(f'running result = {result}')
@@ -881,7 +882,7 @@ def part1(input: str) -> int:
 
     return result
 
-def operator_placement_permutations(nums: List[str]) -> List[List[str]]:
+def operator_placement_permutations(nums: List[str], operators: List[str]) -> List[List[str]]:
     num_operators = len(nums) - 1
     operator_permutations = product(operators, repeat=num_operators)
     equations: List[List[str]] = []
@@ -895,26 +896,28 @@ def operator_placement_permutations(nums: List[str]) -> List[List[str]]:
     return equations
 
 def evaluate_equation_left_to_right(equation: List[str]) -> int:
-    # e.g. 4+2*3+6', evaluate it from left to right
-    # i.e. as though it had brackets like this:
-    # (((4+2)*3)+6)
-    num_operators = len([c for c in equation if not c.isdigit()])
-    # Insert the brackets to make it left-to-right evaluated
-    evaluable_equation = ('(' * num_operators)
-    for i, c in enumerate(equation):
-        evaluable_equation += c
-        if i >1 and i % 2 == 0:
-            evaluable_equation += ')'
-
-    # use eval to actually evaluate it like real math
-    result = eval(evaluable_equation)
-    # print(f'evaluating {equation} as {evaluable_equation}, result = {result}')
-    return result
+    operator = '+'
+    acc = 0
+    for e in equation:
+        if e.isdigit():
+            if operator == '+':
+                acc += int(e)
+            elif operator == '*':
+                acc *= int(e)
+            elif operator == '||':
+                acc = int(str(acc) + e)
+        else:
+            operator = e
+            
+    return acc
     
 
 assert evaluate_equation_left_to_right(['4','+','2','*','3','+','6']) == 24
 assert evaluate_equation_left_to_right(['1','+','1']) == 2
 assert evaluate_equation_left_to_right(['4','*','10']) == 40
 assert evaluate_equation_left_to_right(['10','+','10','*','5']) == 100
-assert part1(sample_input) == 3749
-assert part1(real_input) == 2664460013123
+assert day7(sample_input, part1_operators) == 3749
+assert day7(real_input, part1_operators) == 2664460013123
+
+assert day7(sample_input, part2_operators) == 11387
+assert day7(real_input, part2_operators) == 426214131924213
