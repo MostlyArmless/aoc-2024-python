@@ -1,4 +1,5 @@
-from enum import Enum
+from aoc_tools import is_outside_grid
+from aoc_types import Position, Direction
 from typing import List, Set, Tuple, TypeAlias
 from utils import timer
 
@@ -144,15 +145,6 @@ real_input = '''.#....#...................#................#....................
 .............#.......................................................#.........#..................................................
 ....#.................................#...............#.....#....#......##..............#.......................#........#........'''
 
-class Direction(Enum):
-    UP = '^'
-    DOWN = 'v'
-    LEFT = '<'
-    RIGHT = '>'
-    
-directions = {d.value for d in Direction}
-Position: TypeAlias = Tuple[int, int]
-
 @timer
 def part1(input: str) -> int:
     # parse the input into a grid
@@ -276,7 +268,7 @@ def find_character_and_obstacle_positions(grid: List[str], obstacles: Set[Positi
         for i_col, cell in enumerate(row):
             if cell == '#':
                 obstacles.add((i_row, i_col))
-            elif cell in directions:
+            elif cell in Direction.values():
                 position = (i_row, i_col)
                 visited.add(position)
                 direction = Direction(cell)
@@ -289,13 +281,12 @@ def find_character_and_obstacle_positions_vectors(grid: List[str], obstacles: Se
         for i_col, cell in enumerate(row):
             if cell == '#':
                 obstacles.add((i_row, i_col))
-            elif cell in directions:
+            elif cell in Direction.values():
                 position_vector = ((i_row, i_col), Direction(cell))
                 visited.add(position_vector)
     return position_vector
 
-def is_outside_grid(new_position: Position, num_rows: int, num_cols: int) -> bool:
-    return not (0 <= new_position[0] < num_rows) or not (0 <= new_position[1] < num_cols)
+
             
 def move_forward(position: Position, direction: Direction) -> Position:
     if direction == Direction.UP:
