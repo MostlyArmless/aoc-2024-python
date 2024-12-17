@@ -1,5 +1,5 @@
-from aoc_tools import is_inside_grid
-from aoc_types import Position, ManhattanDistance
+from aoc_tools import is_inside_grid, manhattan_distance
+from aoc_types import Position
 from collections import defaultdict
 from typing import Dict, List, Set, TypeAlias
 from utils import timer
@@ -94,7 +94,7 @@ def locate_antennae(grid) -> Dict[str,List[Position]]:
                 antennae[cell].append((i_row, i_col))
     return antennae
 
-def locate_antinodes(num_rows: int, num_cols: int, antennae: List[Position]):
+def locate_antinodes(num_rows: int, num_cols: int, antennae: List[Position]) -> Set[Position]:
     # Find the distance between each pair of antennae
     antinodes: Set[Position] = set()
     for pair in combinations(antennae, 2):
@@ -109,9 +109,50 @@ def locate_antinodes(num_rows: int, num_cols: int, antennae: List[Position]):
 
     return antinodes
 
+def locate_antinodes_part2(num_rows: int, num_cols: int, antennae: List[Position]) -> Set[Position]:
+    # Find the distance between each pair of antennae
+    antinodes: Set[Position] = set()
+    for pair in combinations(antennae, 2):
+        distance = manhattan_distance(pair[0], pair[1])
+        a = pair[0]
+        b = pair[1]
+        # simultaneously go from a towards b and b towards a
+        while True:
+            a_inside = is_inside_grid(a, num_rows, num_cols)
+            b_inside = is_inside_grid(b, num_rows, num_cols)
+            
+            if a_inside:
+                antinodes.add(a)
+            if b_inside:
+                antinodes.add(b)
 
-def manhattan_distance(a: Position, b: Position) -> ManhattanDistance:
-    return (b[0] - a[0], b[1] - a[1])
+            if not a_inside and not b_inside:
+                break
+            
+            a = (a[0] - distance[0], a[1] - distance[1])
+            b = (b[0] + distance[0], b[1] + distance[1])
+
+    return antinodes
+
+@timer
+def part2(input: str) -> int:
+    grid = input.split('\n')
+    num_rows = len(grid)
+    num_cols = len(grid[0])
+    all_antennae: Dict[Frequency, List[Position]] = locate_antennae(grid)
+    all_antinodes = set()
+
+    for freq, antennae_on_freq in all_antennae.items():
+        # Find the antinodes for just this frequency's antennae, discarding any
+        # which are outside the grid boundaries
+        antinode_locations = locate_antinodes_part2(num_rows, num_cols, antennae_on_freq)
+        for antinode in antinode_locations:
+            all_antinodes.add(antinode)
+
+    return len(all_antinodes)
 
 assert part1(sample_input) == 14
 assert part1(real_input) == 295
+
+assert part2(sample_input) == 34
+assert part2(real_input) == 1034
