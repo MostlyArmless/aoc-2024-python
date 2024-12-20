@@ -35,6 +35,57 @@ def move_data_from_right_to_blanks_on_left(disk: Disk) -> Disk:
             l += 1
     return disk
 
+def move_entire_files_to_blanks_on_left(disk: Disk) -> Disk:
+    """Only move files if there's a big enough space on the left to hold the fully contiguous file"""
+
+    l = disk.index(None)
+    r = len(disk) - 1
+    file_start = None
+    file_end = r
+    file_size = 0
+    file_id = None
+    files_seen = set()
+    while r > l:
+        # First move r leftwards until we hit the end of a file
+        while disk[r] is None:
+            r -= 1
+        file_end = r
+        file_id = disk[r]
+        # move r leftwards until we find the end of this file so we know how big it is
+        while file_id == disk[r]:
+            r -= 1
+        if file_id in files_seen:
+            continue # only ever move (or attempt to move) each file once
+        files_seen.add(file_id)
+        file_start = r + 1
+        file_size = file_end - file_start + 1
+        # Now we have a candidate file we could move.
+        # Find the left-most empty space which is at least as big as this file
+        # and move the data there
+        i_space_start = 0
+        space_size = 0
+        for i in range(1, file_start):
+            if disk[i-1] is not None and disk[i] is None:
+                # Start of blank space
+                space_size = 1
+                i_space_start = i
+            elif disk[i] is None:
+                # middle of blank space
+                space_size += 1
+            
+            if space_size >= file_size:
+                # We can move the file into this space
+                i_dest = i_space_start
+                for i_src in range(file_start, file_end+1):
+                    assert disk[i_dest] is None, f'disk[{i_dest}] was sposta be None but was actually {disk[i_dest]}'
+                    disk[i_dest] = disk[i_src]
+                    disk[i_src] = None
+                    i_dest += 1
+                # visualize_disk(disk)
+                break
+
+    return disk
+
 def calculate_checksum(disk: Disk) -> int:
     score = 0
     for i, c in enumerate(disk):
@@ -43,11 +94,13 @@ def calculate_checksum(disk: Disk) -> int:
 
 @timer
 def part2(input: str) -> int:
-    return 0
+    disk = parse_input(input)
+    move_entire_files_to_blanks_on_left(disk)
+    return calculate_checksum(disk)
 
 assert part1('12345') == 60
 assert part1(sample_input) == 1928
 assert part1(real_input) == 6307275788409
 
-# assert part2(sample_input) == 2858
-# assert part2(real_input) == 42
+assert part2(sample_input) == 2858
+assert part2(real_input) == 6327174563252
